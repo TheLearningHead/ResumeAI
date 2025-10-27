@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
+import { login } from "@/utils/authentication";
 
 interface LoginProps {
   onLogin: () => void;
@@ -14,8 +15,9 @@ const Login = ({ onLogin }: LoginProps) => {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false); // Add loading state
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!email || !password) {
@@ -23,7 +25,14 @@ const Login = ({ onLogin }: LoginProps) => {
       return;
     }
 
-    // Mock authentication
+    setLoading(true); // Set loading to true
+    const response = await login(email, password);
+    setLoading(false); // Reset loading state
+
+    if (!response) {
+      toast.error("Invalid email or password");
+      return;
+    }
     toast.success("Login successful!");
     onLogin();
     navigate("/dashboard");
@@ -62,8 +71,8 @@ const Login = ({ onLogin }: LoginProps) => {
                 required
               />
             </div>
-            <Button type="submit" className="w-full">
-              Sign In
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? "Signing In..." : "Sign In"} {/* Change button text based on loading state */}
             </Button>
           </form>
           <p className="text-sm text-muted-foreground text-center mt-4">
