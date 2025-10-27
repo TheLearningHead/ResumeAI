@@ -12,6 +12,8 @@ const Navbar = ({ isAuthenticated, onLogout }: NavbarProps) => {
   const navigate = useNavigate();
 
   const handleLogout = () => {
+    localStorage.removeItem("companyId");
+    localStorage.removeItem("isLoggedIn");
     onLogout();
     navigate("/");
   };

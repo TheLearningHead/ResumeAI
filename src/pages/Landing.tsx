@@ -16,6 +16,7 @@ const Landing = () => {
             Generate a link, collect resumes, and let AI shortlist the best candidates. 
             Built on AWS cloud infrastructure for scalability and reliability.
           </p>
+          
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link to="/login">
               <Button size="lg" className="text-lg px-8">
