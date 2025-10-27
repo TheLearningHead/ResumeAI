@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Copy, CheckCircle } from "lucide-react";
+import { createJob } from "@/utils/jobs";
 
 const CreateJob = () => {
   const navigate = useNavigate();
@@ -16,7 +17,7 @@ const CreateJob = () => {
   const [generatedLink, setGeneratedLink] = useState("");
   const [copied, setCopied] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!title || !description || !numToShortlist) {
@@ -24,8 +25,12 @@ const CreateJob = () => {
       return;
     }
 
-    const jobId = Math.random().toString(36).substring(7);
-    const link = `${window.location.origin}/apply/${jobId}`;
+    const companyId = localStorage.getItem("companyId") || "";
+    const link = await createJob(companyId, title, description, parseInt(numToShortlist, 10));
+    if (!link) {
+      toast.error("Failed to create job. Please try again.");
+      return;
+    }
     setGeneratedLink(link);
     toast.success("Job created successfully!");
   };

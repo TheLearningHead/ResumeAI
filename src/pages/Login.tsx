@@ -34,6 +34,7 @@ const Login = ({ onLogin }: LoginProps) => {
       return;
     }
     toast.success("Login successful!");
+    localStorage.setItem("companyId", email.split("@")[0]);
     onLogin();
     navigate("/dashboard");
   };
