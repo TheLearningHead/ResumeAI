@@ -1,55 +1,88 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { jobs } from "@/data/dummyData";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { toast } from "sonner";
 import { Upload } from "lucide-react";
+import { getJobs, Job } from "@/lib/data"; // ✅ now using your backend API
 
 const Apply = () => {
-  const { jobId } = useParams();
+  const { jobId } = useParams<{ jobId: string }>();
   const navigate = useNavigate();
-  const job = jobs.find(j => j.id === jobId);
+
+  const [job, setJob] = useState<Job | null>(null);
+  const [loading, setLoading] = useState(true);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [experience, setExperience] = useState("");
   const [fileName, setFileName] = useState("");
 
+  // ✅ Fetch job details from backend
+  useEffect(() => {
+    const fetchJob = async () => {
+      try {
+        const jobs = await getJobs();
+        const foundJob = jobs.find((j) => j.jobId === jobId); // ✅ use jobId, not id
+        setJob(foundJob || null);
+      } catch (error) {
+        console.error("❌ Error fetching job:", error);
+        toast.error("Failed to load job details. Please try again later.");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchJob();
+  }, [jobId]);
+
+  // 🌀 Loading state
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-accent">
+        <p className="text-muted-foreground text-lg">Loading job details...</p>
+      </div>
+    );
+  }
+
+  // ❌ Job not found
   if (!job) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-accent">
         <Card className="max-w-md">
           <CardHeader>
             <CardTitle>Job Not Found</CardTitle>
-            <CardDescription>This job posting doesn't exist</CardDescription>
+            <CardDescription>This job posting doesn't exist.</CardDescription>
           </CardHeader>
         </Card>
       </div>
     );
   }
 
-  if (job.status === "Closed") {
-    navigate(`/apply/${jobId}/closed`);
-    return null;
-  }
-
+  // 📂 File upload handler
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      setFileName(file.name);
-    }
+    if (file) setFileName(file.name);
   };
 
+  // ✅ Form submission
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!name || !email || !experience || !fileName) {
-      toast.error("Please fill in all fields and upload your resume");
+      toast.error("Please fill in all fields and upload your resume.");
       return;
     }
+
+    // Here you would normally POST to your Lambda backend:
+    // await axios.post(`${API_BASE_URL}/apply`, { jobId, name, email, experience, resume: file });
 
     toast.success("Application submitted successfully!");
     navigate(`/apply/${jobId}/success`);
@@ -62,9 +95,10 @@ const Apply = () => {
           <CardHeader>
             <CardTitle className="text-2xl">Apply for {job.title}</CardTitle>
             <CardDescription>
-              Fill out the form below to submit your application
+              Fill out the form below to submit your application.
             </CardDescription>
           </CardHeader>
+
           <CardContent>
             <div className="mb-6 p-4 bg-accent rounded-lg">
               <h3 className="font-semibold mb-2">About this position</h3>
@@ -99,7 +133,7 @@ const Apply = () => {
                 <Label htmlFor="experience">Experience & Skills</Label>
                 <Textarea
                   id="experience"
-                  placeholder="Tell us about your relevant experience, skills, and why you're a great fit for this role..."
+                  placeholder="Tell us about your relevant experience and skills..."
                   value={experience}
                   onChange={(e) => setExperience(e.target.value)}
                   rows={5}
