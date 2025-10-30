@@ -53,7 +53,7 @@ const getJobs = async (): Promise<Job[]> => {
 
 // ✅ Fetch applicants by jobId
 const getApplicantsByJobId = async (jobId: string): Promise<Applicant[]> => {
-  const res = await axios.get(`${API_BASE_URL}/applicants`, { params: { jobId } });
+  const res = await axios.get(`${API_BASE_URL}/job/${jobId}/applications`);
   return res.data;
 };
 

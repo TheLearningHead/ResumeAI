@@ -19,7 +19,19 @@ import {
 } from "@/components/ui/table";
 import { ArrowLeft, ExternalLink, Award } from "lucide-react";
 import { toast } from "sonner";
-import { getJobs, getApplicantsByJobId, Job, Applicant } from "@/lib/data";
+import { getJobs, getApplicantsByJobId, Job } from "@/lib/data";
+
+// Define the Applicant type to match your backend response
+interface Applicant {
+  applicationId: string;
+  jobId: string;
+  candidateName: string;
+  candidateEmail: string;
+  resumeUrl: string;
+  appliedAt: string;
+  matchScore?: number; // optional (not in backend yet)
+  isShortlisted?: boolean;
+}
 
 const JobDetail = () => {
   const { jobId } = useParams<{ jobId: string }>();
@@ -39,7 +51,7 @@ const JobDetail = () => {
           getApplicantsByJobId(jobId),
         ]);
 
-        // ✅ handle { jobs: [...] } or direct array
+        // ✅ Handle { jobs: [...] } or direct array
         let jobList: Job[] = [];
         if (Array.isArray((jobsData as any)?.jobs)) {
           jobList = (jobsData as any).jobs;
@@ -48,8 +60,16 @@ const JobDetail = () => {
         }
 
         const foundJob = jobList.find((j) => j.jobId === jobId) || null;
+
+        // ✅ Extract applications safely
+        const applicantList = Array.isArray((applicantsData as any)?.applications)
+          ? (applicantsData as any).applications
+          : Array.isArray(applicantsData)
+          ? applicantsData
+          : [];
+
         setJob(foundJob);
-        setJobApplicants(applicantsData);
+        setJobApplicants(applicantList);
       } catch (err) {
         console.error("❌ Error fetching job details:", err);
         toast.error("Failed to load job details.");
@@ -120,7 +140,6 @@ const JobDetail = () => {
                 </CardDescription>
               </div>
 
-              {/* Optional: Add this only if you later include an application link */}
               {job.companyId && (
                 <a
                   href={`https://example.com/apply/${job.jobId}`}
@@ -189,27 +208,27 @@ const JobDetail = () => {
                     </TableRow>
                   ) : (
                     jobApplicants
-                      .sort((a, b) => b.matchScore - a.matchScore)
+                      .sort((a, b) => (b.matchScore || 0) - (a.matchScore || 0))
                       .map((applicant) => (
                         <TableRow
-                          key={applicant.id}
+                          key={applicant.applicationId}
                           className="hover:bg-muted/50"
                         >
                           <TableCell className="font-medium">
-                            {applicant.name}
+                            {applicant.candidateName}
                           </TableCell>
-                          <TableCell>{applicant.email}</TableCell>
+                          <TableCell>{applicant.candidateEmail}</TableCell>
                           <TableCell>
                             <div className="flex items-center gap-2">
                               <span className="font-semibold">
-                                {applicant.matchScore}%
+                                {applicant.matchScore ?? 0}%
                               </span>
-                              {getScoreBadge(applicant.matchScore)}
+                              {getScoreBadge(applicant.matchScore ?? 0)}
                             </div>
                           </TableCell>
                           <TableCell>
                             <a
-                              href={applicant.resumeLink}
+                              href={applicant.resumeUrl}
                               className="text-primary hover:underline"
                               target="_blank"
                               rel="noopener noreferrer"
