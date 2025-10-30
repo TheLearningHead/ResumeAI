@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import Landing from "./pages/Landing";
@@ -25,11 +25,12 @@ const queryClient = new QueryClient();
 const App = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
+  // ✅ Check login status on load
   useEffect(() => {
-    const authStatus = localStorage.getItem("isAuthenticated");
-    if (authStatus === "true") {
-      setIsAuthenticated(true);
-    }
+    const authStatus =
+      localStorage.getItem("isAuthenticated") === "true" ||
+      localStorage.getItem("isLoggedIn") === "true";
+    setIsAuthenticated(authStatus);
   }, []);
 
   const handleLogin = () => {
@@ -40,11 +41,19 @@ const App = () => {
   const handleLogout = () => {
     setIsAuthenticated(false);
     localStorage.removeItem("isAuthenticated");
+    localStorage.removeItem("isLoggedIn");
   };
 
   const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-    if (!isAuthenticated) {
-      return <Navigate to="/login" replace />;
+    if (!isAuthenticated) return <Navigate to="/login" replace />;
+    return <>{children}</>;
+  };
+
+  // ✅ Redirect logged-in users away from login page automatically
+  const RedirectIfLoggedIn = ({ children }: { children: React.ReactNode }) => {
+    const location = useLocation();
+    if (isAuthenticated && location.pathname === "/login") {
+      return <Navigate to="/dashboard" replace />;
     }
     return <>{children}</>;
   };
@@ -55,69 +64,71 @@ const App = () => {
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <div className="flex flex-col min-h-screen">
-            <Navbar isAuthenticated={isAuthenticated} onLogout={handleLogout} />
-            <main className="flex-1">
-              <Routes>
-                <Route path="/" element={<Landing />} />
-                <Route path="/login" element={<Login onLogin={handleLogin} />} />
-                <Route path="/about" element={<About />} />
-                <Route
-                  path="/dashboard"
-                  element={
-                    <ProtectedRoute>
-                      <Dashboard />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/jobs"
-                  element={
-                    <ProtectedRoute>
-                      <Jobs />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/jobs/new"
-                  element={
-                    <ProtectedRoute>
-                      <CreateJob />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/jobs/:jobId"
-                  element={
-                    <ProtectedRoute>
-                      <JobDetail />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/jobs/:jobId/shortlist"
-                  element={
-                    <ProtectedRoute>
-                      <Shortlist />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/settings"
-                  element={
-                    <ProtectedRoute>
-                      <Settings />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route path="/apply/:jobId" element={<Apply />} />
-                <Route path="/apply/:jobId/success" element={<ApplySuccess />} />
-                <Route path="/apply/:jobId/closed" element={<ApplyClosed />} />
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </main>
-            <Footer />
-          </div>
+          <RedirectIfLoggedIn>
+            <div className="flex flex-col min-h-screen">
+              <Navbar isAuthenticated={isAuthenticated} onLogout={handleLogout} />
+              <main className="flex-1">
+                <Routes>
+                  <Route path="/" element={<Landing />} />
+                  <Route path="/login" element={<Login onLogin={handleLogin} />} />
+                  <Route path="/about" element={<About />} />
+                  <Route
+                    path="/dashboard"
+                    element={
+                      <ProtectedRoute>
+                        <Dashboard />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/jobs"
+                    element={
+                      <ProtectedRoute>
+                        <Jobs />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/jobs/new"
+                    element={
+                      <ProtectedRoute>
+                        <CreateJob />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/jobs/:jobId"
+                    element={
+                      <ProtectedRoute>
+                        <JobDetail />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/jobs/:jobId/shortlist"
+                    element={
+                      <ProtectedRoute>
+                        <Shortlist />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/settings"
+                    element={
+                      <ProtectedRoute>
+                        <Settings />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route path="/apply/:jobId" element={<Apply />} />
+                  <Route path="/apply/:jobId/success" element={<ApplySuccess />} />
+                  <Route path="/apply/:jobId/closed" element={<ApplyClosed />} />
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </main>
+              <Footer />
+            </div>
+          </RedirectIfLoggedIn>
         </BrowserRouter>
       </TooltipProvider>
     </QueryClientProvider>
