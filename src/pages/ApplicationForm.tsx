@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
+import axios from "axios";
 import { FileText, Upload, User, Mail, Briefcase, CheckCircle } from "lucide-react";
 import { apply } from "@/utils/apply";
 
-// Utility function to convert PDF to Base64
 const pdfToBase64 = (file: File): Promise<string> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -18,7 +18,9 @@ const pdfToBase64 = (file: File): Promise<string> => {
 export default function ApplicationForm() {
   const searchParams = new URLSearchParams(window.location.search);
   const id = searchParams.get("id");
-  
+  const cid = searchParams.get("cid");
+
+  const [job, setJob] = useState<any>(null); // <--- new
   const [resume, setResume] = useState<File | null>(null);
   const [resumeBase64, setResumeBase64] = useState<string | null>(null);
   const [name, setName] = useState<string>("");
@@ -27,7 +29,24 @@ export default function ApplicationForm() {
   const [dragActive, setDragActive] = useState<boolean>(false);
   const [hasAlreadyApplied, setHasAlreadyApplied] = useState<boolean>(false);
 
-  // Check if user has already applied for this job
+  // load job detail
+  useEffect(() => {
+    if (!id) return;
+    if (!cid) return;
+
+    const fetchJob = async () => {
+      try {
+        const res = await axios.get(`https://s8snjnbc4e.execute-api.ap-south-1.amazonaws.com/job/${cid}/${id}`);
+
+        setJob(res.data); // ✅ because response body IS the job object
+      } catch (err) {
+        console.error("❌ error loading job", err);
+      }
+    };
+
+    fetchJob();
+  }, [id]);
+
   useEffect(() => {
     if (id) {
       const appliedKey = `applied_${id}`;
@@ -48,7 +67,7 @@ export default function ApplicationForm() {
         alert('File size must be less than 5MB');
         return;
       }
-      
+
       setResume(file);
       try {
         const base64 = await pdfToBase64(file);
@@ -75,7 +94,7 @@ export default function ApplicationForm() {
     e.preventDefault();
     e.stopPropagation();
     setDragActive(false);
-    
+
     const file = e.dataTransfer.files?.[0];
     if (file) {
       if (file.type !== 'application/pdf') {
@@ -86,7 +105,7 @@ export default function ApplicationForm() {
         alert('File size must be less than 5MB');
         return;
       }
-      
+
       setResume(file);
       try {
         const base64 = await pdfToBase64(file);
@@ -98,7 +117,6 @@ export default function ApplicationForm() {
   };
 
   const handleSubmit = async () => {
-    // Prevent submission if already applied
     if (hasAlreadyApplied) {
       alert("You have already applied for this position.");
       return;
@@ -118,9 +136,9 @@ export default function ApplicationForm() {
       alert("Please enter a valid email address.");
       return;
     }
-    
+
     setIsSubmitting(true);
-    
+
     try {
       const application = {
         jobId: id,
@@ -130,15 +148,14 @@ export default function ApplicationForm() {
         resumeName: resume.name,
         resumeType: resume.type,
       };
-      
+
       const response = await apply(application);
-      
+
       if (response) {
-        // Save to localStorage after successful submission
         const appliedKey = `applied_${id}`;
         localStorage.setItem(appliedKey, "true");
         setHasAlreadyApplied(true);
-        
+
         alert("Application submitted successfully!");
         setName("");
         setEmail("");
@@ -153,6 +170,7 @@ export default function ApplicationForm() {
       setIsSubmitting(false);
     }
   };
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 py-12 px-4 sm:px-6 lg:px-8">
@@ -171,6 +189,18 @@ export default function ApplicationForm() {
 
           {/* Form */}
           <div className="px-8 py-8 space-y-6">
+
+            {/* NEW job display */}
+            {job && (
+              <div className="mb-6 p-4 border rounded-lg bg-gray-50">
+                <p className="text-lg font-semibold text-gray-800">{job.title}</p>
+                <p className="text-sm text-gray-600 mt-1">{job.description}</p>
+                {job.companyName && (
+                  <p className="text-sm text-gray-500 mt-1">Company: {job.companyName}</p>
+                )}
+              </div>
+            )}
+
             {hasAlreadyApplied ? (
               /* Already Applied Message */
               <div className="text-center py-8">
@@ -225,19 +255,18 @@ export default function ApplicationForm() {
                     <FileText className="w-4 h-4" />
                     <span>Resume (PDF only, max 5MB)</span>
                   </label>
-                  
+
                   <div
                     onDragEnter={handleDrag}
                     onDragLeave={handleDrag}
                     onDragOver={handleDrag}
                     onDrop={handleDrop}
-                    className={`relative border-2 border-dashed rounded-lg p-8 transition-all ${
-                      hasAlreadyApplied
+                    className={`relative border-2 border-dashed rounded-lg p-8 transition-all ${hasAlreadyApplied
                         ? "border-gray-200 bg-gray-50 opacity-60 cursor-not-allowed"
                         : dragActive
-                        ? "border-blue-500 bg-blue-50"
-                        : "border-gray-300 hover:border-gray-400"
-                    }`}
+                          ? "border-blue-500 bg-blue-50"
+                          : "border-gray-300 hover:border-gray-400"
+                      }`}
                   >
                     <input
                       type="file"
@@ -247,7 +276,7 @@ export default function ApplicationForm() {
                       disabled={hasAlreadyApplied}
                       className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
                     />
-                    
+
                     <div className="text-center pointer-events-none">
                       <Upload className={`mx-auto w-12 h-12 ${dragActive && !hasAlreadyApplied ? "text-blue-500" : "text-gray-400"}`} />
                       <p className="mt-2 text-sm text-gray-600">
