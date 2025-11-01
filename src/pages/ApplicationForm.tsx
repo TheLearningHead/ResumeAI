@@ -18,7 +18,7 @@ const pdfToBase64 = (file: File): Promise<string> => {
 export default function ApplicationForm() {
   const searchParams = new URLSearchParams(window.location.search);
   const id = searchParams.get("id");
-  const cid = searchParams.get("cid");
+  const cid = searchParams.get("companyId");
 
   const [job, setJob] = useState<any>(null); // <--- new
   const [resume, setResume] = useState<File | null>(null);
