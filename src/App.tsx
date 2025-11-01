@@ -19,6 +19,7 @@ import ApplyClosed from "./pages/ApplyClosed";
 import Settings from "./pages/Settings";
 import About from "./pages/About";
 import NotFound from "./pages/NotFound";
+import ApplicationForm from "./pages/ApplicationForm";
 
 const queryClient = new QueryClient();
 
@@ -58,77 +59,87 @@ const App = () => {
     return <>{children}</>;
   };
 
+  const AppContent = () => {
+    // Render all routes with layout (Navbar + Footer)
+    return (
+      <RedirectIfLoggedIn>
+        <div className="flex flex-col min-h-screen">
+          <Navbar isAuthenticated={isAuthenticated} onLogout={handleLogout} />
+          <main className="flex-1">
+            <Routes>
+              <Route path="/" element={<Landing />} />
+              <Route path="/login" element={<Login onLogin={handleLogin} />} />
+              <Route path="/about" element={<About />} />
+              <Route
+                path="/dashboard"
+                element={
+                  <ProtectedRoute>
+                    <Dashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/jobs"
+                element={
+                  <ProtectedRoute>
+                    <Jobs />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/jobs/new"
+                element={
+                  <ProtectedRoute>
+                    <CreateJob />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/jobs/:jobId"
+                element={
+                  <ProtectedRoute>
+                    <JobDetail />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/jobs/:jobId/shortlist"
+                element={
+                  <ProtectedRoute>
+                    <Shortlist />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/settings"
+                element={
+                  <ProtectedRoute>
+                    <Settings />
+                  </ProtectedRoute>
+                }
+              />
+              <Route path="/apply/:jobId" element={<Apply />} />
+              <Route path="/apply/:jobId/success" element={<ApplySuccess />} />
+              <Route path="/apply/:jobId/closed" element={<ApplyClosed />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </main>
+          <Footer />
+        </div>
+      </RedirectIfLoggedIn>
+    );
+  };
+
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <RedirectIfLoggedIn>
-            <div className="flex flex-col min-h-screen">
-              <Navbar isAuthenticated={isAuthenticated} onLogout={handleLogout} />
-              <main className="flex-1">
-                <Routes>
-                  <Route path="/" element={<Landing />} />
-                  <Route path="/login" element={<Login onLogin={handleLogin} />} />
-                  <Route path="/about" element={<About />} />
-                  <Route
-                    path="/dashboard"
-                    element={
-                      <ProtectedRoute>
-                        <Dashboard />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/jobs"
-                    element={
-                      <ProtectedRoute>
-                        <Jobs />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/jobs/new"
-                    element={
-                      <ProtectedRoute>
-                        <CreateJob />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/jobs/:jobId"
-                    element={
-                      <ProtectedRoute>
-                        <JobDetail />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/jobs/:jobId/shortlist"
-                    element={
-                      <ProtectedRoute>
-                        <Shortlist />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/settings"
-                    element={
-                      <ProtectedRoute>
-                        <Settings />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route path="/apply/:jobId" element={<Apply />} />
-                  <Route path="/apply/:jobId/success" element={<ApplySuccess />} />
-                  <Route path="/apply/:jobId/closed" element={<ApplyClosed />} />
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-              </main>
-              <Footer />
-            </div>
-          </RedirectIfLoggedIn>
+          <Routes>
+            <Route path="/job/apply" element={<ApplicationForm />} />
+            <Route path="*" element={<AppContent />} />
+          </Routes>
         </BrowserRouter>
       </TooltipProvider>
     </QueryClientProvider>
