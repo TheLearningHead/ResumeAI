@@ -98,10 +98,6 @@ const Login = ({ onLogin }: LoginProps) => {
               {loading ? "Signing In..." : "Sign In"}
             </Button>
           </form>
-
-          <p className="text-sm text-muted-foreground text-center mt-4">
-            Mock login for demo purposes. Enter any credentials.
-          </p>
         </CardContent>
       </Card>
     </div>
